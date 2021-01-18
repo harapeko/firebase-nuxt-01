@@ -1,0 +1,22 @@
+# SSRに不要なファイルを除外する
+# .nuxt, node_modules, package.json, tsconfig.json以外が不要な感じ
+/assets
+/components
+/layouts
+/middleware
+/pages
+/plugins
+/static
+/store
+/test
+.babelrc
+.editorconfig
+.eslintrc.js
+firebase.json
+.gitignore
+.prettierrc
+commitlint.config.js
+jest.config.js
+README.md
+stylelint.config.js
+*.d.ts

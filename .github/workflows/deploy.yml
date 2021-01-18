@@ -1,0 +1,88 @@
+name: Build and Deploy
+
+# トリガー
+on:
+  push:
+    branches:
+      - main
+
+env:
+  # GCPプロジェクトID
+  GCP_PROJECT: 'firebase-nuxt-01'
+  # ホスト名/プロジェクトID/イメージ名とタグによって構成される
+  # gcr.ioはGCPのContainer Registry内のレジストリを示すホスト
+  # https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions
+  IMAGE: gcr.io/firebase-nuxt-01/renderer:${{ github.sha }}
+
+jobs:
+  # job id
+  delivery:
+    # job name
+    name: Delivery
+    # job実行マシン(必須)
+    runs-on: ubuntu-latest
+    # 一連のタスク
+    steps:
+      # Githubからリポジトリをcheckoutして
+      - name: Checkout therepository
+        uses: actions/checkout@v2
+
+      # package-lock.jsonに基づいて依存モジュールをインストール
+      # package.jsonは見ない
+      # 実行前にnode_modulesは削除される
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Github Actions環境でのGoogle Cloud SDK設定(gcloudとか使用できるようになる)
+      - name: GCP Authenticate
+        # uses: GoogleCloudPlatform/github-actions/setup-gcloud@master deprecated
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          service_account_email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      # DockerがContainer Registryで認証するように構成する
+      # イメージのpull, pushができるようになる
+      - name: Configure docker to use the gloud cli
+        run: gcloud auth configure-docker --quiet
+
+      # イメージのビルド
+      - name: Build a docker image
+        run: docker build . -t $IMAGE
+
+      # Container Registryへのpush
+      - name: Push the docker image
+        run: docker push $IMAGE
+
+      # Cloud Runへのデプロイを行う
+      # ここでのrendererはfirebase.jsonのrewriteルールに記述したserviceIdと一致
+      # regionもrewriteルールに一致
+      # set-env-varsでタイムゾーンを東京に設定
+      # デプロイされたコンテナを公開する
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy renderer \
+            --image $IMAGE \
+            --project $GCP_PROJECT \
+            --region asia-northeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --quiet
+
+      # Firebaseへのデプロイ
+      # Github Actions for Firebaseを利用する
+      # https://github.com/marketplace/actions/github-action-for-firebase
+      #
+      # Firebaseへのデプロイは必ずCloud Runよりも後で行う必要がある。
+      # Cloud Run上にリライト先のサービスがデプロイされてからでないと、
+      # Cloud Runへのrewriteルールが設定されたHostingのデプロイが失敗する為
+      - name: Deploy to Firebase
+        # uses: w9jds/firebase-action@v1.5.0
+        uses: w9jds/firebase-action@v2.0.0
+        with:
+          args: deploy -P $GCP_PROJECT --force
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY_BASE64 }}

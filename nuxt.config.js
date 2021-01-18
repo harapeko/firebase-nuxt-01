@@ -1,4 +1,10 @@
 export default {
+  // server: {
+  //   port: 8080, // default: 3000
+  //   host: '0.0.0.0', // default: localhost,
+  //   timing: false,
+  // },
+
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head: {
     title: 'firebase-nuxt-01',
@@ -14,7 +20,18 @@ export default {
   css: [],
 
   // Plugins to run before rendering page (https://go.nuxtjs.dev/config-plugins)
-  plugins: [],
+  plugins: [{ src: '~/plugins/firebase', ssr: true }],
+
+  env: {
+    FIREBASE_API_KEY: 'AIzaSyALy833eEMLi5Ho9Bc8u9NUsqUKmp2Olh8',
+    FIREBASE_AUTH_DOMAIN: 'fir-nuxt-01-c11e0.firebaseapp.com',
+    FIREBASE_DATABASE_URL: 'https://firebase-nuxt-01.firebaseio.com',
+    FIREBASE_PROJECT_ID: 'firebase-nuxt-01',
+    FIREBASE_STORAGE_BUCKET: 'firebase-nuxt-01.appspot.com',
+    FIREBASE_MESSAGING_SENDER_ID: '660587646928',
+    FIREBASE_APP_ID: '1:660587646928:web:a510bdae63b48c79b033d5',
+    FIREBASE_MEASUREMENT_ID: 'G-754RPVVMWN',
+  },
 
   // Auto import components (https://go.nuxtjs.dev/config-components)
   components: true,

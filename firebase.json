@@ -1,0 +1,17 @@
+{
+  "hosting": {
+    "public comment": "Firebase Hostingにデプロイする相対パス",
+    "public": "static",
+
+    "rewrites comment": "全リクエストをリダイレクトして、Cloud Runでデプロイする",
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "renderer",
+          "region": "asia-northeast1"
+        }
+      }
+    ]
+  }
+}
